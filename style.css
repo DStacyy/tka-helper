@@ -458,3 +458,10 @@ body.is-menu .brand{display:block}
   .splash-judul::after,
   .splash-kecil{ animation:none; opacity:1; }
 }
+/* ---------- beri ruang atas di halaman menu agar tidak menempel ke tepi ---------- */
+body.is-menu .wrap{
+  padding-top:96px;
+}
+body.is-menu .menu{
+  padding-top:8px;
+}
