@@ -301,6 +301,7 @@ function periksa(){
 function route(){
   const id = decodeURIComponent(location.hash.slice(1));
   M = MAPEL.find(m => m.id === id) || null;
+  if (window.TKA_AUDIO) TKA_AUDIO.suasana(M ? "latihan" : "menu");
   if (!M){ renderMenu(); return; }
   normalisasi(M);
   soal = M.soal;
