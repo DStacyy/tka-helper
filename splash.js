@@ -1,7 +1,7 @@
 /* ==========================================================
    SPLASH TKA HELPER
    Muncul sekali per sesi, hanya di halaman menu.
-   Tidak pernah muncul di halaman latihan.
+   Kalimat muncul dengan efek huruf acak yang lalu menetap.
    ========================================================== */
 (function () {
   const KUNCI_SESI = "tka-helper-splash-selesai";
@@ -11,6 +11,9 @@
     "EVERY ROUND COUNTS.",
     "READ. ANSWER. REVIEW."
   ];
+  const KARAKTER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*/+<>?";
+  const DURASI_ACAK = 1700;   // total lama efek acak dalam milidetik
+  const JEDA_ACAK = 45;       // seberapa sering huruf acak berganti
   const kurangiGerak = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let sedangTampil = false;
 
@@ -48,32 +51,54 @@
 
     el.querySelector("#splashMulai").addEventListener("click", () => selesai(true));
     el.querySelector("#splashLewati").addEventListener("click", () => selesai(false));
-    ketik(kalimat);
+    acak(kalimat);
   }
 
-  function ketik(teks){
+  /* huruf acak yang berganti cepat, lalu menetap satu per satu dari kiri ke kanan */
+  function acak(teks){
     const out = document.getElementById("splashKalimat");
     const aksi = document.getElementById("splashAksi");
     if (!out || !aksi) return;
 
     if (kurangiGerak){
-      out.textContent = teks;
-      out.classList.add("selesai");
-      aksi.classList.add("tampil");
+      finish(out, aksi, teks);
       return;
     }
 
-    let i = 0;
-    const timer = setInterval(() => {
-      if (!document.getElementById("splash")){ clearInterval(timer); return; }
-      i++;
-      out.textContent = teks.slice(0, i);
-      if (i >= teks.length){
-        clearInterval(timer);
-        out.classList.add("selesai");
-        setTimeout(() => aksi.classList.add("tampil"), 200);
+    const mulai = performance.now();
+    let terakhirGanti = 0;
+
+    function frame(now){
+      if (!document.getElementById("splash")) return;   // splash sudah ditutup
+
+      const t = Math.min(1, (now - mulai) / DURASI_ACAK);
+
+      if (now - terakhirGanti > JEDA_ACAK || t === 1){
+        terakhirGanti = now;
+        let tampilan = "";
+        for (let i = 0; i < teks.length; i++){
+          const c = teks[i];
+          if (c === " "){ tampilan += " "; continue; }
+          // setiap huruf menetap pada waktu yang sedikit berbeda, dari kiri ke kanan
+          const waktuMenetap = 0.15 + (i / teks.length) * 0.75;
+          tampilan += t >= waktuMenetap
+            ? c
+            : KARAKTER[Math.floor(Math.random() * KARAKTER.length)];
+        }
+        out.textContent = tampilan;
       }
-    }, 48);
+
+      if (t < 1) requestAnimationFrame(frame);
+      else finish(out, aksi, teks);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function finish(out, aksi, teks){
+    out.textContent = teks;
+    out.classList.add("selesai");
+    setTimeout(() => aksi.classList.add("tampil"), 200);
   }
 
   function selesai(denganMusik){

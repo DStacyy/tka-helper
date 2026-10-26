@@ -87,7 +87,7 @@ function hapusRiwayat(){
 
 function htmlRiwayat(filterId, batas = 5){
   const semua = bacaRiwayat().filter(r => !filterId || r.mapel === filterId);
-  if (!semua.length) return `<p class="note">Belum ada riwayat latihan.</p>`;
+  if (!semua.length) return "";   // kosong: tidak menampilkan apa-apa
 
   const items = semua.slice(0, batas).map(r => {
     const tgl = new Date(r.waktu).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
@@ -108,7 +108,10 @@ function htmlRiwayat(filterId, batas = 5){
 
 function segarkanRiwayat(){
   const el = $("riwayat");
-  if (el) el.innerHTML = htmlRiwayat(M && !SESI ? M.id : null);
+  if (!el) return;
+  const html = htmlRiwayat(M && !SESI ? M.id : null);
+  el.innerHTML = html;
+  el.style.display = html ? "" : "none";   // sembunyikan seluruh kotak bila kosong
 }
 
 /* ---------- penyimpanan: skor rekap (terpisah dari riwayat) ---------- */
@@ -181,6 +184,7 @@ function renderMenu(){
   document.title = "TKA Helper";
   $("app").innerHTML = `
     <main class="menu">
+      
       <section class="panel-menu">
         <h1>Latihan Soal</h1>
         <p class="sub">Pilih mata pelajaran untuk mulai latihan.</p>
@@ -215,7 +219,7 @@ function renderMenu(){
         </div>
       </section>
 
-      <div id="riwayat" class="menu-riwayat"></div>
+      
     </main>`;
   segarkanRiwayat();
 }
@@ -491,6 +495,7 @@ function periksa(){
 
 /* ---------- routing ---------- */
 function route(){
+  document.body.classList.add("is-menu");
   const bagian = decodeURIComponent(location.hash.slice(1)).split("/").filter(Boolean);
 
   if (bagian[0] === "rekap"){
@@ -504,7 +509,7 @@ function route(){
 
   const mp = MAPEL.find(m => m.id === bagian[0]);
   if (!mp) return renderMenu();
-
+  document.body.classList.remove("is-menu");
   audio("latihan");
   SESI = null;
   M = mp;

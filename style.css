@@ -413,3 +413,14 @@ button.splash-lewati:hover:not(:disabled){color:var(--ink);border-color:var(--mu
 .menu .panel-menu{
   border-top:1px solid var(--line);
 }
+/* ---------- judul brand di pojok kiri atas (halaman menu) ---------- */
+/* ---------- judul brand di pojok kiri atas (hanya halaman menu) ---------- */
+.brand{
+  position:fixed;top:16px;left:20px;z-index:800;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink);
+  padding:6px 0 6px 12px;border-left:3px solid var(--red);
+  pointer-events:none;
+  display:none;
+}
+body.is-menu .brand{display:block}
