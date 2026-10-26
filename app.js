@@ -1,12 +1,15 @@
 /* ==========================================================
    MESIN TKA HELPER
-   Tidak perlu diubah saat menambah mapel. Cukup tambahkan file
-   di folder data/ lalu daftarkan di index.html.
+   Riwayat sesi disimpan di localStorage browser.
+   Tidak perlu diubah saat menambah mapel.
    ========================================================== */
 const L = "ABCDEFGHIJ";
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const MAPEL = window.MAPEL || [];
+
+const KUNCI_RIWAYAT = "tka-helper-riwayat";
+const MAKS_RIWAYAT = 30;
 
 let M = null, soal = [], state = [], cur = 0;
 
@@ -46,8 +49,84 @@ function benar(i){
   return st.pilih === s.kunci;
 }
 
+/* ---------- riwayat (localStorage) ---------- */
+function bacaRiwayat(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT));
+    return Array.isArray(d) ? d : [];
+  } catch (e){ return []; }
+}
+
+function tulisRiwayat(list){
+  try{
+    localStorage.setItem(KUNCI_RIWAYAT, JSON.stringify(list.slice(0, MAKS_RIWAYAT)));
+    return true;
+  } catch (e){
+    alert("Riwayat tidak dapat disimpan di browser ini.");
+    return false;
+  }
+}
+
+function simpanSesi(){
+  const dicek = soal
+    .map((s, i) => state[i].dicek ? { no: s.no, benar: benar(i) } : null)
+    .filter(Boolean);
+  if (!dicek.length) return;
+
+  const entri = {
+    waktu: new Date().toISOString(),
+    mapel: M.id,
+    nama: M.nama,
+    total: soal.length,
+    dijawab: dicek.length,
+    benar: dicek.filter(x => x.benar).length,
+    detail: dicek
+  };
+  if (tulisRiwayat([entri, ...bacaRiwayat()])){
+    soal.forEach((s, i) => state[i] = resetState(s));
+    cur = 0;
+    renderQ();
+    segarkanRiwayat();
+  }
+}
+
+function hapusRiwayat(){
+  if (confirm("Hapus semua riwayat di browser ini?")){
+    localStorage.removeItem(KUNCI_RIWAYAT);
+    segarkanRiwayat();
+  }
+}
+
+function htmlRiwayat(filterId, batas = 5){
+  const semua = bacaRiwayat().filter(r => !filterId || r.mapel === filterId);
+  if (!semua.length) return `<p class="note">Belum ada riwayat.</p>`;
+
+  const items = semua.slice(0, batas).map(r => {
+    const tgl = new Date(r.waktu).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+    const pola = r.detail
+      .map(d => `<span class="${d.benar ? "ok" : "bad"}">${esc(d.no)}</span>`).join(" ");
+    return `
+      <li class="rw-item">
+        <div class="rw-head"><b>${esc(r.nama)}</b> <span>${esc(tgl)}</span></div>
+        <div class="rw-skor">${r.benar} benar dari ${r.dijawab} dijawab (total ${r.total} soal)</div>
+        <div class="rw-pola">${pola}</div>
+      </li>`;
+  }).join("");
+
+  return `
+    <h3 class="rw-judul">Riwayat terakhir</h3>
+    <ul class="rw-list">${items}</ul>
+    <button id="hapusRiwayat" class="ghost">Hapus riwayat</button>`;
+}
+
+function segarkanRiwayat(){
+  const el = $("riwayat");
+  if (el) el.innerHTML = htmlRiwayat(M ? M.id : null);
+}
+
 /* ---------- menu mapel ---------- */
 function renderMenu(){
+  M = null;
   $("app").classList.add("menu-mode");
   document.title = "TKA Helper";
   $("app").innerHTML = `
@@ -63,7 +142,9 @@ function renderMenu(){
           </a>`).join("")}
       </div>
       ${MAPEL.length === 0 ? "<p>Belum ada mata pelajaran.</p>" : ""}
+      <div id="riwayat" class="menu-riwayat"></div>
     </main>`;
+  segarkanRiwayat();
 }
 
 /* ---------- kerangka halaman latihan ---------- */
@@ -75,28 +156,29 @@ function renderShell(){
       <a class="back" href="#">← Semua mapel</a>
       <h1>${esc(M.nama)}</h1>
       <p class="sub">TKA ${M.tahun} (Wajib)</p>
-      <div class="absen">
-        <label for="absen">Nomor absen murid</label>
-        <div><input id="absen" type="number" min="1" placeholder="1"><button id="goAbsen">Buka soal</button></div>
-      </div>
       <div id="grid"></div>
       <div class="score" id="score"></div>
-      <p style="margin:12px 0 0"><button id="resetAll">Ulangi semua</button></p>
+      <div class="aksi-sidebar">
+        <button id="simpan" class="primary">Simpan hasil</button>
+        <button id="resetAll">Ulangi semua</button>
+      </div>
+      <div id="riwayat"></div>
       <p class="note">Kunci dan pembahasan disusun dari analisis, bukan dari dokumen resmi. Mohon dicek ulang sebelum dibagikan.</p>
     </aside>
     <main id="main"></main>`;
+  segarkanRiwayat();
 }
 
-/* ---------- daftar soal di sidebar, dikelompokkan per teks ---------- */
+/* ---------- daftar soal di sidebar, dikelompokkan per teks/topik ---------- */
 function renderGrid(){
-  let html = "", lastP = undefined, open = false;
+  let html = "", lastKey = undefined, open = false;
   soal.forEach((s, i) => {
-    const p = s.p ?? -1;
-    if (p !== lastP){
+    const key = s.grup ?? (s.p ?? -1);
+    if (key !== lastKey){
       if (open) html += `</div>`;
-      const judul = p >= 0 ? M.teks[p].judul : "Lainnya";
+      const judul = s.grup ?? (s.p >= 0 ? M.teks[s.p].judul : "Lainnya");
       html += `<div class="grp">${esc(judul)}</div><div class="grid">`;
-      open = true; lastP = p;
+      open = true; lastKey = key;
     }
     const st = state[i];
     let cls = (i === cur ? "cur " : "");
@@ -105,9 +187,11 @@ function renderGrid(){
   });
   if (open) html += `</div>`;
   $("grid").innerHTML = html;
+
   const dicek = state.filter(s => s.dicek).length;
   const bn = soal.filter((_, i) => state[i].dicek && benar(i)).length;
   $("score").textContent = `Dijawab ${dicek}/${soal.length} · Benar ${bn}`;
+  $("simpan").disabled = dicek === 0;
 }
 
 /* ---------- teks bacaan ---------- */
@@ -127,10 +211,9 @@ function renderPasase(s, i){
     ${tabel}
     ${t.src ? `<p class="src">Sumber: ${esc(t.src)}</p>` : ""}
     ${t.catatan ? `<details class="catatan"><summary>Kosakata &amp; struktur (penjelasan Indonesia)</summary>${t.catatan.map(x => `<p>${esc(x)}</p>`).join("")}</details>` : ""}`;
-  // teks pertama dalam satu kelompok terbuka; sisanya bisa dibuka bila perlu
   return pertama
     ? `<div class="pas">${isi}</div>`
-    : `<details class="pas-lipat" style="margin-bottom:20px"><summary>Tampilkan teks bacaan: ${esc(t.judul)}</summary><div class="pas">${isi}</div></details>`;
+    : `<details class="pas-lipat"><summary>Tampilkan teks bacaan: ${esc(t.judul)}</summary><div class="pas">${isi}</div></details>`;
 }
 
 /* ---------- soal ---------- */
@@ -184,6 +267,7 @@ function renderQ(){
     <div class="meta">Soal ${esc(s.no)} dari ${soal.length} · ${esc(M.nama)} TKA ${M.tahun}</div>
     ${renderPasase(s, cur)}
     <p class="q">${s.q}</p>
+    ${s.kode ? `<pre class="kode"><code>${esc(s.kode)}</code></pre>` : ""}
     ${petunjuk ? `<p class="hint-soal">${petunjuk}</p>` : ""}
     ${body}
     ${hasil}
@@ -228,19 +312,18 @@ function route(){
 
 /* ---------- event ---------- */
 document.addEventListener("click", e => {
-  const t = e.target.closest("button"); if (!t || !M) return;
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "hapusRiwayat"){ hapusRiwayat(); return; }
+  if (!M) return;
   if (t.dataset.o !== undefined) pilihOpsi(+t.dataset.o);
   else if (t.dataset.i !== undefined) go(+t.dataset.i);
   else if (t.id === "submit") periksa();
   else if (t.id === "prev") go(cur - 1);
   else if (t.id === "next") go(cur + 1);
   else if (t.id === "retry"){ state[cur] = resetState(soal[cur]); renderQ(); }
-  else if (t.id === "resetAll" && confirm("Ulangi semua soal dari awal?")){
+  else if (t.id === "simpan") simpanSesi();
+  else if (t.id === "resetAll" && confirm("Ulangi semua soal dari awal? Jawaban yang belum disimpan akan hilang.")){
     soal.forEach((s, i) => state[i] = resetState(s)); go(0);
-  }
-  else if (t.id === "goAbsen"){
-    const n = parseInt($("absen").value, 10);
-    if (n > 0) go((n - 1) % soal.length);
   }
 });
 
@@ -253,9 +336,7 @@ document.addEventListener("change", e => {
 });
 
 document.addEventListener("keydown", e => {
-  if (!M) return;
-  if (e.target.id === "absen" && e.key === "Enter"){ $("goAbsen").click(); return; }
-  if (e.target.tagName === "INPUT") return;
+  if (!M || e.target.tagName === "INPUT") return;
   const k = e.key.toUpperCase(), idx = L.indexOf(k);
   if (k.length === 1 && idx > -1 && soal[cur].tipe !== "kat") pilihOpsi(idx);
   else if (e.key === "Enter" && e.target.tagName !== "BUTTON") periksa();
