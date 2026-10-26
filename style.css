@@ -424,3 +424,37 @@ button.splash-lewati:hover:not(:disabled){color:var(--ink);border-color:var(--mu
   display:none;
 }
 body.is-menu .brand{display:block}
+/* ---------- perbaiki animasi judul splash ---------- */
+/* matikan bar merah dari gaya h1 global dan overlay glitch yang bertumpuk */
+#splash h1.splash-judul::before{ content:none; display:none; }
+.splash-judul::before{ content:none; display:none; }
+
+/* animasi masuk yang bersih: fade dan geser, tanpa mengubah letter-spacing */
+#splash h1.splash-judul{
+  animation:judulMasuk .8s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes judulMasuk{
+  from{ opacity:0; transform:translateY(-16px); }
+  to  { opacity:1; transform:none; }
+}
+
+/* garis merah di bawah judul muncul setelah teks masuk */
+.splash-judul::after{
+  opacity:0;
+  animation:garisMasuk .6s ease-out .6s forwards;
+}
+@keyframes garisMasuk{
+  to{ opacity:1; }
+}
+
+/* kalimat dan label kecil ikut muncul pelan */
+.splash-kecil{
+  opacity:0;
+  animation:garisMasuk .6s ease-out .1s forwards;
+}
+
+@media (prefers-reduced-motion: reduce){
+  #splash h1.splash-judul,
+  .splash-judul::after,
+  .splash-kecil{ animation:none; opacity:1; }
+}
