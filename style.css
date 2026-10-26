@@ -409,3 +409,7 @@ button.splash-lewati:hover:not(:disabled){color:var(--ink);border-color:var(--mu
 }
 .btn-link:hover{background:#ff6470}
 .skor-terakhir{font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+/* ---------- hilangkan garis merah ganda di panel menu ---------- */
+.menu .panel-menu{
+  border-top:1px solid var(--line);
+}
