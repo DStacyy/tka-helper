@@ -39,7 +39,7 @@
     el.innerHTML = `
       <div class="splash-scan"></div>
       <div class="splash-isi">
-        <p class="splash-kecil">Tactical training · TKA 2025</p>
+        <p class="splash-kecil">Tactical training · TKA 2026</p>
         <h1 class="splash-judul" data-text="TKA HELPER">TKA HELPER</h1>
         <p class="splash-kalimat" id="splashKalimat"></p>
         <div class="splash-aksi" id="splashAksi">
