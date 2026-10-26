@@ -1,65 +1,249 @@
-:root{--bg:#eef3f8;--card:#fff;--ink:#1b2a41;--mute:#5d6b82;--line:#d5dee9;--acc:#2457c5;--ok:#1e8e5a;--okbg:#e3f5ec;--bad:#c9382f;--badbg:#fbe9e7;--sel:#fff4cc;--pas:#f6f8fb}
-@media(prefers-color-scheme:dark){:root{--bg:#141c2b;--card:#1d2739;--ink:#e8eef8;--mute:#9aa9c2;--line:#33425c;--acc:#7aa2ff;--ok:#4cc38a;--okbg:#17372b;--bad:#ff7a70;--badbg:#3d1f1c;--sel:#4a3f14;--pas:#18222f}}
+/* ==========================================================
+   TKA Helper · tema tactical ala Valorant
+   latar hitam bergradasi, aksen merah, panel bersudut
+   ========================================================== */
+
+:root{
+  --bg-1:#0b0c0e;
+  --bg-2:#14161a;
+  --panel:#101216;
+  --panel-2:#171a20;
+  --line:#262a31;
+  --ink:#ece8e1;
+  --mute:#8b929a;
+  --red:#ff4655;
+  --red-dim:#7a1f28;
+  --ok:#3ddc97;
+  --okbg:rgba(61,220,151,.10);
+  --badbg:rgba(255,70,85,.12);
+  --sel:rgba(255,70,85,.14);
+  --pas:#0d0f13;
+  --display:"Bahnschrift","Oswald","Arial Narrow",Impact,sans-serif;
+  --body:"Segoe UI",system-ui,sans-serif;
+  --cut:16px;
+}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Segoe UI",system-ui,sans-serif}
-.wrap{display:grid;grid-template-columns:270px 1fr;gap:22px;max-width:1220px;margin:0 auto;padding:22px}
+
+html{background:var(--bg-1)}
+
+body{
+  margin:0;
+  color:var(--ink);
+  font:16px/1.6 var(--body);
+  min-height:100vh;
+  background:
+    radial-gradient(900px 500px at 100% -10%, rgba(255,70,85,.16), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(255,70,85,.08), transparent 60%),
+    linear-gradient(160deg, var(--bg-2) 0%, var(--bg-1) 55%, #090a0c 100%);
+  background-attachment:fixed;
+}
+/* tekstur garis tipis ala layar taktis */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 4px);
+}
+
+.wrap{display:grid;grid-template-columns:270px 1fr;gap:24px;max-width:1220px;margin:0 auto;padding:24px}
 .wrap.menu-mode{grid-template-columns:1fr}
-aside{position:sticky;top:22px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;max-height:calc(100vh - 44px);overflow:auto}
-h1{font-size:21px;margin:0 0 4px}
-h2{font-size:18px;margin:0 0 6px}
-.sub{font-size:14px;color:var(--mute);margin:0 0 14px}
-.back{display:inline-block;font-size:14px;margin-bottom:10px;color:var(--acc);text-decoration:none}
-.absen label{display:block;font-size:14px;color:var(--mute);margin-bottom:6px}
+
+/* ---------- panel bersudut terpotong ---------- */
+aside,main{
+  background:linear-gradient(180deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line);
+  border-top:3px solid var(--red);
+  clip-path:polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+  box-shadow:0 20px 40px rgba(0,0,0,.45);
+}
+aside{position:sticky;top:24px;align-self:start;padding:20px 18px;max-height:calc(100vh - 48px);overflow:auto}
+main{padding:30px;min-height:480px}
+
+aside::-webkit-scrollbar,.pas::-webkit-scrollbar{width:6px}
+aside::-webkit-scrollbar-thumb,.pas::-webkit-scrollbar-thumb{background:var(--red-dim)}
+
+/* ---------- judul ---------- */
+h1{
+  font-family:var(--display);font-weight:700;font-size:26px;line-height:1.1;
+  letter-spacing:.06em;text-transform:uppercase;margin:0 0 6px;color:var(--ink);
+}
+h1::before{
+  content:"";display:inline-block;width:10px;height:22px;margin-right:10px;
+  vertical-align:-4px;background:var(--red);transform:skewX(-12deg);
+}
+h2{
+  font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:.04em;
+  text-transform:uppercase;margin:0 0 8px;color:var(--ink);
+}
+.sub{font-size:14px;color:var(--mute);margin:0 0 18px}
+.back{
+  display:inline-block;font-family:var(--display);font-size:14px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mute);text-decoration:none;margin-bottom:14px;
+}
+.back:hover{color:var(--red)}
+
+/* ---------- tombol ---------- */
+button{
+  font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink);background:var(--panel-2);
+  border:1px solid var(--line);border-bottom:3px solid var(--line);border-radius:0;
+  padding:10px 16px;cursor:pointer;
+  clip-path:polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  transition:background .15s, color .15s, border-color .15s;
+}
+button:hover:not(:disabled){background:var(--red);border-color:var(--red);color:#fff}
+button:active:not(:disabled){transform:translateY(1px)}
+button.primary{background:var(--red);border-color:var(--red);color:#fff}
+button.primary:hover:not(:disabled){background:#ff6470;border-color:#ff6470}
+button:disabled{opacity:.35;cursor:not-allowed}
+button[hidden]{display:none}
+button:focus-visible,input:focus-visible,.opt:focus-visible,.card:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+/* ---------- input nomor absen ---------- */
+.absen label{
+  display:block;font-family:var(--display);font-size:13px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:8px;
+}
 .absen div{display:flex;gap:8px;flex-wrap:wrap}
-input[type=number]{width:84px;padding:8px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
-button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px}
-button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
-button:disabled{opacity:.45;cursor:not-allowed}
-button:focus-visible,input:focus-visible,.opt:focus-visible,.card:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.grp{font-size:13px;color:var(--mute);margin:12px 0 4px;font-weight:600}
-.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
-.grid button{padding:5px 0;font-size:13px;min-width:0}
-.grid .cur{border:2px solid var(--acc);font-weight:700}
-.grid .ok{background:var(--okbg);border-color:var(--ok)}
-.grid .bad{background:var(--badbg);border-color:var(--bad)}
-.score{font-size:15px;color:var(--mute);margin-top:12px}
-.note{font-size:13px;color:var(--mute);margin-top:12px}
-main{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;min-height:480px}
-.meta{color:var(--mute);font-size:14px;margin-bottom:10px}
-.pas{background:var(--pas);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:20px;max-height:360px;overflow:auto}
-.pas details{margin-top:10px}
-.pas summary{cursor:pointer;color:var(--acc);font-size:15px}
-.pas h2{font-size:16px;margin:0 0 8px}
-.pas p{margin:0 0 10px;font-size:16px;line-height:1.65;max-width:72ch}
+input[type=number]{
+  width:92px;padding:9px 10px;font:inherit;color:var(--ink);
+  background:#07080a;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:0;
+}
+
+/* ---------- daftar soal ---------- */
+.grp{
+  font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mute);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line);
+}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.grid button{font-size:14px;padding:7px 0;min-width:0;text-align:center;clip-path:none;background:#0a0b0e}
+.grid button:hover:not(:disabled){background:var(--panel-2);border-color:var(--red);color:var(--ink)}
+.grid .cur{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--red);color:#fff}
+.grid .ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.grid .bad{background:var(--badbg);border-color:var(--red);color:var(--red)}
+.score{font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-top:16px;color:var(--ink)}
+.note{font-size:13px;color:var(--mute);margin-top:14px}
+
+/* ---------- meta soal ---------- */
+.meta{
+  font-family:var(--display);font-size:14px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mute);margin-bottom:16px;
+}
+.meta::before{content:"// ";color:var(--red)}
+
+/* ---------- teks bacaan ---------- */
+.pas{
+  background:var(--pas);border:1px solid var(--line);border-left:3px solid var(--red);
+  padding:18px 20px;margin-bottom:22px;max-height:360px;overflow:auto;
+}
+.pas h2{color:var(--red)}
+.pas p{margin:0 0 10px;font-size:16px;line-height:1.7;max-width:72ch;color:#d6d2ca}
 .pas .src,.pas .catatan p{font-size:14px;color:var(--mute)}
-.pas table{border-collapse:collapse;margin:8px 0 12px;font-size:14px;background:var(--card)}
+.pas details{margin-top:10px}
+.pas summary{font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--red);cursor:pointer}
+details.pas-lipat{margin-bottom:22px}
+details.pas-lipat > summary{
+  font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink);cursor:pointer;padding:9px 12px;background:var(--panel-2);
+  border:1px solid var(--line);border-left:3px solid var(--red);margin-bottom:12px;list-style:none;
+}
+details.pas-lipat > summary::-webkit-details-marker{display:none}
+details.pas-lipat > summary:hover{color:var(--red)}
+.pas table{border-collapse:collapse;margin:8px 0 12px;font-size:14px;background:var(--panel)}
 .pas th,.pas td{border:1px solid var(--line);padding:6px 10px;text-align:left}
-.q{font-size:20px;line-height:1.5;margin:0 0 18px;max-width:70ch}
-.opts{display:grid;gap:9px;margin-bottom:20px}
-.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;padding:12px 15px;font-size:18px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
-.opt b{min-width:24px;color:var(--acc)}
+.pas th{background:var(--red-dim);color:var(--ink);font-family:var(--display);letter-spacing:.04em;text-transform:uppercase}
+
+/* ---------- soal ---------- */
+.q{font-size:20px;line-height:1.5;margin:0 0 20px;max-width:70ch;color:#f4f1ec}
+.hint-soal{font-size:14px;color:var(--mute);margin:-10px 0 16px}
+pre.kode{
+  background:#06070a;border:1px solid var(--line);border-left:3px solid var(--red);
+  padding:16px 18px;margin:0 0 20px;overflow-x:auto;max-width:100%;
+  font:14px/1.5 Consolas,"Courier New",monospace;color:#d9d5cd;
+}
+pre.kode code{white-space:pre}
+
+/* ---------- pilihan jawaban ---------- */
+.opts{display:grid;gap:10px;margin-bottom:22px}
+.opt{
+  position:relative;display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;
+  padding:13px 18px 13px 20px;font-size:18px;line-height:1.5;color:var(--ink);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:0;cursor:pointer;
+  transition:background .15s, border-color .15s, transform .15s;
+}
+.opt::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;
+  transition:background .15s;
+}
+.opt:hover:not(:disabled){background:#1d2128;border-color:#3a3f48;transform:translateX(4px)}
+.opt:hover:not(:disabled)::before{background:var(--red)}
+.opt:disabled{cursor:default}
+.opt b{font-family:var(--display);font-size:16px;min-width:26px;letter-spacing:.04em;color:var(--red)}
 .opt span{white-space:pre-line}
-.opt.sel{background:var(--sel);border-color:#d6a900}
+.opt.sel{background:var(--sel);border-color:var(--red)}
+.opt.sel::before{background:var(--red)}
 .opt.right{background:var(--okbg);border-color:var(--ok)}
-.opt.wrong{background:var(--badbg);border-color:var(--bad)}
+.opt.right::before{background:var(--ok)}
+.opt.wrong{background:var(--badbg);border-color:var(--red)}
+.opt.wrong::before{background:var(--red)}
 .opt.missed{border-style:dashed;border-color:var(--ok)}
-.opt.right b{color:var(--ok)}.opt.wrong b{color:var(--bad)}
-table.bs{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:16px}
-table.bs th,table.bs td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
-table.bs td.c,table.bs th.c{text-align:center;width:90px}
-table.bs input{width:20px;height:20px}
+.opt.right b{color:var(--ok)}
+.opt.wrong b{color:var(--red)}
+
+/* ---------- tabel benar/salah & kategori ---------- */
+table.bs{width:100%;border-collapse:collapse;margin-bottom:22px;font-size:16px;background:var(--panel-2);border:1px solid var(--line)}
+table.bs th,table.bs td{border:1px solid var(--line);padding:11px 12px;text-align:left;vertical-align:top}
+table.bs th{
+  background:var(--red-dim);color:var(--ink);font-family:var(--display);font-size:15px;
+  letter-spacing:.06em;text-transform:uppercase;
+}
+table.bs td.c,table.bs th.c{text-align:center;width:120px}
+table.bs input{width:20px;height:20px;accent-color:var(--red)}
 table.bs tr.right td{background:var(--okbg)}
 table.bs tr.wrong td{background:var(--badbg)}
-.hint-soal{font-size:14px;color:var(--mute);margin:-8px 0 14px}
-.verdict{font-size:20px;font-weight:700;margin:0 0 6px}
-.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}
-.expl{background:var(--bg);border-left:4px solid var(--acc);padding:12px 16px;border-radius:6px;white-space:pre-wrap;max-width:70ch}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-.hint{color:var(--mute);font-size:13px;margin-top:16px}
+
+/* ---------- hasil & pembahasan ---------- */
+.verdict{
+  font-family:var(--display);font-size:22px;letter-spacing:.08em;text-transform:uppercase;
+  margin:0 0 10px;
+}
+.verdict.ok{color:var(--ok)}
+.verdict.bad{color:var(--red)}
+.expl{
+  background:#0b0d11;border:1px solid var(--line);border-left:3px solid var(--red);
+  padding:16px 18px;white-space:pre-wrap;max-width:70ch;color:#d6d2ca;
+}
+
+/* ---------- aksi bawah ---------- */
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.hint{font-size:13px;color:var(--mute);margin-top:18px}
+
+/* ---------- menu mapel ---------- */
 .menu{min-height:auto}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:18px}
-.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--ink);text-decoration:none}
-.card:hover{border-color:var(--acc)}
-.card p{font-size:15px;color:var(--mute);margin:0 0 12px}
-.card span{font-size:13px;color:var(--acc);font-weight:600}
-@media(max-width:860px){.wrap{grid-template-columns:1fr;padding:10px}aside{position:static;max-height:none}main{padding:18px}.q{font-size:18px}.grid{grid-template-columns:repeat(8,1fr)}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-top:22px}
+.card{
+  position:relative;display:block;padding:22px 22px 20px;text-decoration:none;color:var(--ink);
+  background:linear-gradient(180deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line);border-left:3px solid var(--red-dim);
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  transition:border-left-color .15s, transform .15s, background .15s;
+}
+.card:hover{border-left-color:var(--red);transform:translateX(4px);background:#1b1f26}
+.card h2{color:var(--ink)}
+.card:hover h2{color:var(--red)}
+.card p{font-size:15px;color:var(--mute);margin:0 0 14px}
+.card span{font-family:var(--display);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+
+/* ---------- layar kecil ---------- */
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;padding:12px}
+  aside{position:static;max-height:none}
+  main{padding:20px}
+  .q{font-size:18px}
+  .grid{grid-template-columns:repeat(8,1fr)}
+}
+
+/* ---------- hormati pengaturan gerak yang dikurangi ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before{transition:none !important}
+  .opt:hover:not(:disabled),.card:hover{transform:none}
+}
