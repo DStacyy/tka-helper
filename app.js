@@ -462,6 +462,7 @@ function renderQ(){
     <div class="meta">Soal ${esc(s.no)} dari ${soal.length} · ${esc(M.nama)}${SESI?.rekap ? "" : ` TKA ${M.tahun}`}</div>
     ${renderPasase(s, cur)}
     <p class="q">${s.q}</p>
+    ${s.img ? `<img class="soal-img" src="data/img/${esc(s.img)}" alt="Gambar soal ${esc(s.no)}" loading="lazy">` : ""}
     ${s.kode ? `<pre class="kode"><code>${esc(s.kode)}</code></pre>` : ""}
     ${petunjuk ? `<p class="hint-soal">${petunjuk}</p>` : ""}
     ${body}
