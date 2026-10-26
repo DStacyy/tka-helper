@@ -16,7 +16,6 @@
   soal: [
     // ---------- Proses Produksi ----------
     { no: "1", grup: "Proses Produksi",
-      q: "Berdasarkan deskripsi, manakah alat yang digunakan dalam proses produksi gantungan kunci akrilik tersebut?",
       q: "UMKM Arya sedang memproduksi gantungan kunci akrilik dengan desain custom. Dalam proses produksinya, mereka melalui beberapa tahapan: pembuatan desain digital, pemotongan bahan, pencetakan, dan perakitan. Untuk mendukung produksi tersebut, mereka menggunakan laptop, perangkat lunak desain grafis, mesin laser cutting, akrilik lembaran, cincin logam kecil, lem akrilik khusus.\n\nBerdasarkan deskripsi, manakah alat yang digunakan dalam proses produksi gantungan kunci akrilik tersebut?",
       opsi: [
         "Akrilik lembaran, cincin logam kecil, lem akrilik khusus",
