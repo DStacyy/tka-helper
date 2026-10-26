@@ -1,22 +1,28 @@
 /* ==========================================================
    MESIN TKA HELPER
-   Riwayat sesi disimpan di localStorage browser.
-   Tidak perlu diubah saat menambah mapel.
+   Menu: Latihan Soal dan Rekap Materi.
+   Riwayat latihan dan skor rekap disimpan di localStorage, terpisah.
    ========================================================== */
 const L = "ABCDEFGHIJ";
 const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const MAPEL = window.MAPEL || [];
+const REKAP = window.REKAP || [];
 
 const KUNCI_RIWAYAT = "tka-helper-riwayat";
+const KUNCI_REKAP = "tka-helper-rekap";
 const MAKS_RIWAYAT = 30;
 
-let M = null, soal = [], state = [], cur = 0;
+let M = null;       // data yang sedang tampil: mapel, atau sesi rekap
+let SESI = null;    // null untuk latihan biasa; { rekap:true, ... } untuk latihan rekap
+let soal = [], state = [], cur = 0;
+
+function audio(mode){ if (window.TKA_AUDIO) TKA_AUDIO.suasana(mode); }
 
 /* ---------- normalisasi: semua tipe diubah ke bentuk seragam ---------- */
 function normalisasi(m){
   m.soal.forEach(s => {
-    if (s.bs){                       // format lama: benar/salah per baris (boolean)
+    if (s.bs){
       s.tipe = "kat";
       s.labelKat = ["Benar", "Salah"];
       s.baris = s.bs.map(b => ({ t: b.t, k: b.k ? 0 : 1 }));
@@ -26,9 +32,8 @@ function normalisasi(m){
   });
 }
 
-function initState(){
-  state = soal.map(s => resetState(s));
-}
+function initState(){ state = soal.map(s => resetState(s)); }
+
 function resetState(s){
   if (s.tipe === "kat")   return { jawab: s.baris.map(() => null), dicek: false };
   if (s.tipe === "multi") return { pilih: [], dicek: false };
@@ -49,7 +54,13 @@ function benar(i){
   return st.pilih === s.kunci;
 }
 
-/* ---------- riwayat (localStorage) ---------- */
+function resetSemua(){
+  soal.forEach((s, i) => state[i] = resetState(s));
+  cur = 0;
+  renderQ();
+}
+
+/* ---------- penyimpanan: riwayat latihan ---------- */
 function bacaRiwayat(){
   try{
     const d = JSON.parse(localStorage.getItem(KUNCI_RIWAYAT));
@@ -67,31 +78,8 @@ function tulisRiwayat(list){
   }
 }
 
-function simpanSesi(){
-  const dicek = soal
-    .map((s, i) => state[i].dicek ? { no: s.no, benar: benar(i) } : null)
-    .filter(Boolean);
-  if (!dicek.length) return;
-
-  const entri = {
-    waktu: new Date().toISOString(),
-    mapel: M.id,
-    nama: M.nama,
-    total: soal.length,
-    dijawab: dicek.length,
-    benar: dicek.filter(x => x.benar).length,
-    detail: dicek
-  };
-  if (tulisRiwayat([entri, ...bacaRiwayat()])){
-    soal.forEach((s, i) => state[i] = resetState(s));
-    cur = 0;
-    renderQ();
-    segarkanRiwayat();
-  }
-}
-
 function hapusRiwayat(){
-  if (confirm("Hapus semua riwayat di browser ini?")){
+  if (confirm("Hapus semua riwayat latihan di browser ini?")){
     localStorage.removeItem(KUNCI_RIWAYAT);
     segarkanRiwayat();
   }
@@ -99,12 +87,11 @@ function hapusRiwayat(){
 
 function htmlRiwayat(filterId, batas = 5){
   const semua = bacaRiwayat().filter(r => !filterId || r.mapel === filterId);
-  if (!semua.length) return `<p class="note">Belum ada riwayat.</p>`;
+  if (!semua.length) return `<p class="note">Belum ada riwayat latihan.</p>`;
 
   const items = semua.slice(0, batas).map(r => {
     const tgl = new Date(r.waktu).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
-    const pola = r.detail
-      .map(d => `<span class="${d.benar ? "ok" : "bad"}">${esc(d.no)}</span>`).join(" ");
+    const pola = r.detail.map(d => `<span class="${d.benar ? "ok" : "bad"}">${esc(d.no)}</span>`).join(" ");
     return `
       <li class="rw-item">
         <div class="rw-head"><b>${esc(r.nama)}</b> <span>${esc(tgl)}</span></div>
@@ -121,55 +108,259 @@ function htmlRiwayat(filterId, batas = 5){
 
 function segarkanRiwayat(){
   const el = $("riwayat");
-  if (el) el.innerHTML = htmlRiwayat(M ? M.id : null);
+  if (el) el.innerHTML = htmlRiwayat(M && !SESI ? M.id : null);
 }
 
-/* ---------- menu mapel ---------- */
+/* ---------- penyimpanan: skor rekap (terpisah dari riwayat) ---------- */
+function bacaRekap(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KUNCI_REKAP));
+    return d && typeof d === "object" ? d : {};
+  } catch (e){ return {}; }
+}
+
+function tulisRekap(obj){
+  try{
+    localStorage.setItem(KUNCI_REKAP, JSON.stringify(obj));
+    return true;
+  } catch (e){
+    alert("Skor tidak dapat disimpan di browser ini.");
+    return false;
+  }
+}
+
+const rekapKey = (r, t) => `${r.mapel}/${t.id}`;
+
+function skorLabel(r, t){
+  const d = bacaRekap()[rekapKey(r, t)];
+  return d ? `Skor terakhir: ${d.benar}/${d.total} benar` : "Belum dikerjakan";
+}
+
+/* ---------- simpan hasil (latihan biasa atau rekap) ---------- */
+function simpanSesi(){
+  const dicek = soal
+    .map((s, i) => state[i].dicek ? { no: s.no, benar: benar(i) } : null)
+    .filter(Boolean);
+  if (!dicek.length) return;
+  const jmlBenar = dicek.filter(x => x.benar).length;
+
+  if (SESI && SESI.rekap){
+    const data = bacaRekap();
+    data[SESI.key] = {
+      waktu: new Date().toISOString(),
+      benar: jmlBenar,
+      dijawab: dicek.length,
+      total: soal.length
+    };
+    if (tulisRekap(data)){
+      resetSemua();
+      alert(`Skor disimpan: ${jmlBenar} benar dari ${dicek.length} dijawab.`);
+    }
+    return;
+  }
+
+  const entri = {
+    waktu: new Date().toISOString(),
+    mapel: M.id,
+    nama: M.nama,
+    total: soal.length,
+    dijawab: dicek.length,
+    benar: jmlBenar,
+    detail: dicek
+  };
+  if (tulisRiwayat([entri, ...bacaRiwayat()])){
+    resetSemua();
+    segarkanRiwayat();
+  }
+}
+
+/* ---------- halaman menu utama: Latihan Soal dan Rekap Materi ---------- */
 function renderMenu(){
-  M = null;
+  M = null; SESI = null;
   $("app").classList.add("menu-mode");
   document.title = "TKA Helper";
   $("app").innerHTML = `
     <main class="menu">
-      <h1>TKA Helper</h1>
-      <p class="sub">Pilih mata pelajaran untuk mulai latihan.</p>
-      <div class="cards">
-        ${MAPEL.map(m => `
-          <a class="card" href="#${esc(m.id)}">
-            <h2>${esc(m.nama)}</h2>
-            <p>${esc(m.deskripsi || "")}</p>
-            <span>${m.soal.length} soal · TKA ${m.tahun}</span>
-          </a>`).join("")}
-      </div>
-      ${MAPEL.length === 0 ? "<p>Belum ada mata pelajaran.</p>" : ""}
+      <section class="panel-menu">
+        <h1>Latihan Soal</h1>
+        <p class="sub">Pilih mata pelajaran untuk mulai latihan.</p>
+        <div class="cards">
+          ${MAPEL.map(m => `
+            <a class="card" href="#${esc(m.id)}">
+              <h2>${esc(m.nama)}</h2>
+              <p>${esc(m.deskripsi || "")}</p>
+              <span>${m.soal.length} soal · TKA ${m.tahun}</span>
+            </a>`).join("")}
+        </div>
+      </section>
+
+      <section class="panel-menu">
+        <h1>Rekap Materi</h1>
+        <p class="sub">Ringkasan materi, contoh soal, dan latihan untuk memperdalam pemahaman.</p>
+        <div class="cards">
+          ${MAPEL.map(m => {
+            const r = REKAP.find(x => x.mapel === m.id);
+            return r
+              ? `<a class="card" href="#rekap/${esc(m.id)}">
+                   <h2>${esc(m.nama)}</h2>
+                   <p>${r.topik.length} topik · ${esc(r.deskripsi || "")}</p>
+                   <span>Buka rekap →</span>
+                 </a>`
+              : `<div class="card card-soon">
+                   <h2>${esc(m.nama)}</h2>
+                   <p>Rekap sedang disiapkan.</p>
+                   <span>Segera hadir</span>
+                 </div>`;
+          }).join("")}
+        </div>
+      </section>
+
       <div id="riwayat" class="menu-riwayat"></div>
     </main>`;
   segarkanRiwayat();
+}
+
+/* ---------- halaman rekap: daftar topik per mapel ---------- */
+function renderRekapMapel(mapelId){
+  M = null; SESI = null;
+  $("app").classList.add("menu-mode");
+  const r = REKAP.find(x => x.mapel === mapelId);
+  if (!r){
+    document.title = "Rekap Materi · TKA Helper";
+    $("app").innerHTML = `<main class="menu"><a class="back" href="#">← Semua mapel</a><p>Rekap untuk mapel ini belum tersedia.</p></main>`;
+    return;
+  }
+  audio("menu");
+  document.title = `Rekap ${r.nama} · TKA Helper`;
+  $("app").innerHTML = `
+    <main class="menu">
+      <a class="back" href="#">← Semua mapel</a>
+      <h1>Rekap ${esc(r.nama)}</h1>
+      <p class="sub">${esc(r.deskripsi || "")}</p>
+      <div class="cards">
+        ${r.topik.map(t => `
+          <a class="card" href="#rekap/${esc(r.mapel)}/${esc(t.id)}">
+            <h2>${esc(t.judul)}</h2>
+            <p>${esc(t.ringkasSingkat || "")}</p>
+            <span>${esc(skorLabel(r, t))}</span>
+          </a>`).join("")}
+      </div>
+    </main>`;
+}
+
+/* ---------- halaman rekap: ringkasan satu topik ---------- */
+function renderRekapTopik(mapelId, topikId){
+  const r = REKAP.find(x => x.mapel === mapelId);
+  const t = r && r.topik.find(x => x.id === topikId);
+  if (!t) return renderRekapMapel(mapelId);
+
+  M = null; SESI = null;
+  audio("menu");
+  $("app").classList.add("menu-mode");
+  document.title = `${t.judul} · Rekap Materi`;
+  $("app").innerHTML = `
+    <main class="menu rekap-page">
+      <a class="back" href="#rekap/${esc(r.mapel)}">← Rekap ${esc(r.nama)}</a>
+      <h1>${esc(t.judul)}</h1>
+      <p class="sub">${esc(r.nama)} · Ringkasan, contoh, dan latihan</p>
+
+      <section class="blok">
+        <h2 class="sub-judul">Ringkasan materi</h2>
+        ${t.ringkasan.map(x => typeof x === "string"
+            ? `<p>${esc(x)}</p>`
+            : `<h3 class="sub-judul-kecil">${esc(x.h)}</h3>`).join("")}
+      </section>
+
+      <aside class="refleksi"><b>INGAT:</b> ${esc(t.refleksi)}</aside>
+
+      <section class="blok">
+        <h2 class="sub-judul">Contoh soal</h2>
+        ${t.contoh.map((c, i) => `
+          <div class="contoh">
+            <p class="contoh-no">Contoh ${i + 1}</p>
+            <pre class="kode"><code>${esc(c.soal)}</code></pre>
+            <details>
+              <summary>Lihat penyelesaian</summary>
+              <div class="expl">${esc(c.penyelesaian)}</div>
+            </details>
+          </div>`).join("")}
+      </section>
+
+      <div class="aksi-rekap">
+        <a class="btn-link" href="#rekap/${esc(r.mapel)}/${esc(t.id)}/latihan">Mulai latihan (${t.latihan.length} soal)</a>
+        <span class="skor-terakhir">${esc(skorLabel(r, t))}</span>
+      </div>
+    </main>`;
+}
+
+/* ---------- sesi rekap: menggabungkan soal lama dan baru jadi satu sesi ---------- */
+function buildSesi(r, t){
+  const teks = [], peta = {};
+  const ambilTeks = (kunci, isi) => {
+    if (peta[kunci] === undefined){ peta[kunci] = teks.length; teks.push(isi); }
+    return peta[kunci];
+  };
+
+  const soalSesi = t.latihan.map((it, n) => {
+    let s;
+    if (it.ref){
+      const src = MAPEL.find(m => m.id === it.ref);
+      normalisasi(src);
+      const asli = src.soal[it.i];
+      s = { ...asli, no: String(n + 1), grup: asli.grup ?? (asli.p == null ? "Latihan" : undefined) };
+      if (asli.p != null) s.p = ambilTeks(`${src.id}:${asli.p}`, src.teks[asli.p]);
+    } else {
+      s = { ...it, no: String(n + 1), grup: it.grup ?? "Latihan" };
+      if (it.p != null) s.p = ambilTeks(`topik:${it.p}`, t.teks[it.p]);
+    }
+    return s;
+  });
+
+  return { id: `rekap:${rekapKey(r, t)}`, nama: t.judul, tahun: r.tahun ?? 2025, teks, soal: soalSesi };
+}
+
+function mulaiRekap(mapelId, topikId){
+  const r = REKAP.find(x => x.mapel === mapelId);
+  const t = r && r.topik.find(x => x.id === topikId);
+  if (!t) return renderMenu();
+
+  audio("latihan");     // latihan rekap senyap, seperti latihan biasa
+  SESI = { rekap: true, mapel: r.mapel, topik: t, key: rekapKey(r, t) };
+  M = buildSesi(r, t);
+  normalisasi(M);
+  soal = M.soal;
+  initState();
+  cur = 0;
+  renderShell();
+  renderQ();
 }
 
 /* ---------- kerangka halaman latihan ---------- */
 function renderShell(){
   $("app").classList.remove("menu-mode");
   document.title = `${M.nama} · TKA Helper`;
+  const rekap = !!(SESI && SESI.rekap);
   $("app").innerHTML = `
     <aside>
-      <a class="back" href="#">← Semua mapel</a>
+      <a class="back" href="${rekap ? `#rekap/${esc(SESI.mapel)}/${esc(SESI.topik.id)}` : "#"}">
+        ${rekap ? "← Ringkasan" : "← Semua mapel"}
+      </a>
       <h1>${esc(M.nama)}</h1>
-      <p class="sub">TKA ${M.tahun} (Wajib)</p>
+      <p class="sub">${rekap ? "Latihan rekap materi" : `TKA ${M.tahun} (Wajib)`}</p>
       <div id="grid"></div>
       <div class="score" id="score"></div>
       <div class="aksi-sidebar">
-        <button id="simpan" class="primary">Simpan hasil</button>
+        <button id="simpan" class="primary">${rekap ? "Simpan skor" : "Simpan hasil"}</button>
         <button id="resetAll">Ulangi semua</button>
       </div>
-      <div id="riwayat"></div>
+      ${rekap ? "" : `<div id="riwayat"></div>`}
       <p class="note">Kunci dan pembahasan disusun dari analisis, bukan dari dokumen resmi. Mohon dicek ulang sebelum dibagikan.</p>
     </aside>
     <main id="main"></main>`;
-  segarkanRiwayat();
+  if (!rekap) segarkanRiwayat();
 }
 
-/* ---------- daftar soal di sidebar, dikelompokkan per teks/topik ---------- */
+/* ---------- daftar soal di sidebar ---------- */
 function renderGrid(){
   let html = "", lastKey = undefined, open = false;
   soal.forEach((s, i) => {
@@ -197,7 +388,7 @@ function renderGrid(){
 /* ---------- teks bacaan ---------- */
 function renderPasase(s, i){
   if (s.p == null) return "";
-  const pertama = i === 0 || soal[i-1].p !== s.p;
+  const pertama = i === 0 || soal[i - 1].p !== s.p;
   const t = M.teks[s.p];
   const tabel = t.tabel ? `
     <p><b>${esc(t.tabel.judul)}</b></p>
@@ -264,7 +455,7 @@ function renderQ(){
   const petunjuk = s.tipe === "multi" ? "Klik semua jawaban yang benar, lalu tekan Periksa." : "";
 
   $("main").innerHTML = `
-    <div class="meta">Soal ${esc(s.no)} dari ${soal.length} · ${esc(M.nama)} TKA ${M.tahun}</div>
+    <div class="meta">Soal ${esc(s.no)} dari ${soal.length} · ${esc(M.nama)}${SESI?.rekap ? "" : ` TKA ${M.tahun}`}</div>
     ${renderPasase(s, cur)}
     <p class="q">${s.q}</p>
     ${s.kode ? `<pre class="kode"><code>${esc(s.kode)}</code></pre>` : ""}
@@ -298,13 +489,27 @@ function periksa(){
   if (!state[cur].dicek && sudahJawab(cur)){ state[cur].dicek = true; renderQ(); }
 }
 
+/* ---------- routing ---------- */
 function route(){
-  const id = decodeURIComponent(location.hash.slice(1));
-  M = MAPEL.find(m => m.id === id) || null;
-  if (window.TKA_AUDIO) TKA_AUDIO.suasana(M ? "latihan" : "menu");
-  if (!M){ renderMenu(); return; }
-  normalisasi(M);
-  soal = M.soal;
+  const bagian = decodeURIComponent(location.hash.slice(1)).split("/").filter(Boolean);
+
+  if (bagian[0] === "rekap"){
+    const p = bagian.slice(1);
+    if (p.length === 0) return renderMenu();
+    if (p.length === 1) return renderRekapMapel(p[0]);
+    if (p.length === 2) return renderRekapTopik(p[0], p[1]);
+    if (p[2] === "latihan") return mulaiRekap(p[0], p[1]);
+    return renderMenu();
+  }
+
+  const mp = MAPEL.find(m => m.id === bagian[0]);
+  if (!mp) return renderMenu();
+
+  audio("latihan");
+  SESI = null;
+  M = mp;
+  normalisasi(mp);
+  soal = mp.soal;
   initState();
   cur = 0;
   renderShell();
@@ -324,7 +529,7 @@ document.addEventListener("click", e => {
   else if (t.id === "retry"){ state[cur] = resetState(soal[cur]); renderQ(); }
   else if (t.id === "simpan") simpanSesi();
   else if (t.id === "resetAll" && confirm("Ulangi semua soal dari awal? Jawaban yang belum disimpan akan hilang.")){
-    soal.forEach((s, i) => state[i] = resetState(s)); go(0);
+    resetSemua();
   }
 });
 

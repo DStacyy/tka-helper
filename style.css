@@ -352,3 +352,60 @@ button.splash-lewati:hover:not(:disabled){color:var(--ink);border-color:var(--mu
   .splash-scan,.splash-kalimat::after,.splash-judul,.splash-judul::before{animation:none}
   .splash-judul::before{display:none}
 }
+/* ==========================================================
+   REKAP MATERI dan PANEL MENU (tambahkan di akhir style.css)
+   ========================================================== */
+
+/* ---------- panel menu: Latihan Soal dan Rekap Materi ---------- */
+.menu .panel-menu{
+  background:linear-gradient(180deg, var(--panel-2), var(--panel));
+  border:1px solid var(--line);border-top:3px solid var(--red);
+  clip-path:polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+  box-shadow:0 20px 40px rgba(0,0,0,.45);
+  padding:26px 28px;margin-bottom:30px;
+}
+.menu .panel-menu h1{margin-bottom:4px}
+
+.card-soon{opacity:.45;cursor:default}
+.card-soon:hover{transform:none;border-left-color:var(--red-dim);background:linear-gradient(180deg, var(--panel-2), var(--panel))}
+.card-soon span{color:var(--mute)}
+
+/* ---------- halaman ringkasan rekap ---------- */
+.rekap-page{max-width:900px;margin:0 auto}
+.rekap-page .blok p{font-size:16px;line-height:1.75;color:#d6d2ca;max-width:72ch;margin:0 0 12px}
+.sub-judul{
+  font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--red);margin:30px 0 12px;
+}
+.sub-judul-kecil{
+  font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink);margin:20px 0 6px;
+}
+
+.refleksi{
+  margin:26px 0;padding:18px 22px;
+  background:var(--panel-2);border:1px solid var(--line);border-left:4px solid var(--ok);
+  font-size:16px;line-height:1.75;color:#d6d2ca;max-width:72ch;
+}
+.refleksi b{font-family:var(--display);letter-spacing:.12em;color:var(--ok);margin-right:6px}
+
+.contoh{margin:0 0 22px}
+.contoh-no{
+  font-family:var(--display);font-size:14px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mute);margin:0 0 6px;
+}
+.contoh details{margin-top:8px}
+.contoh details summary{
+  font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--red);cursor:pointer;
+}
+.contoh .expl{margin-top:10px}
+
+.aksi-rekap{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:30px}
+.btn-link{
+  display:inline-block;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.08em;
+  text-transform:uppercase;text-decoration:none;color:#fff;background:var(--red);
+  padding:13px 24px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+}
+.btn-link:hover{background:#ff6470}
+.skor-terakhir{font-family:var(--display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
